@@ -1,4 +1,6 @@
-# DeepLearning_Study_1
-밑바닥부터 시작하는 딥러닝/DeepLearning from Scratch
+# DeepLearning_Study
 
-위의 책을 기반으로 개인적인 학습을 기록해놓은 
+다음 책을 기반으로 작성한 정리본 모음집
+
+밑바닥부터 시작하는 딥러닝, DeepLearning from Scratch
+러닝! OpenCV 3,           Learning! OpenCV 3

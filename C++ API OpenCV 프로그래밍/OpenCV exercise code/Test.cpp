@@ -3,39 +3,104 @@
 #include <opencv2/opencv.hpp>
 
 using namespace std;
-using namespace cv;
 
-int main() {
-	Mat img = imread("D:/example/dataset/전신 골격 원자선 스캔.png");
-	cvtColor(img, img, COLOR_BGR2GRAY);
+int main()
+{
+	cv::namedWindow("Display <ORIGIN>");
+	cv::namedWindow("Display <RESULT BACK_PROJECT>");
+	cv::namedWindow("Display <RESULT BACK_PROJECT(RGB)>");
+	cv::namedWindow("Display <COLOR CHAR in BackProject>");
 
-	Mat laplacianImg;
-	Laplacian(img, laplacianImg, CV_16S);
+	cv::VideoCapture camera;
+	camera.open(0);
 
-	Mat sharpedImg;
-	add(img, laplacianImg, sharpedImg);
+	if (!camera.isOpened()) {
+		cout << "■□■□■□ 카메라 인식 실패 ■□■□■□" << endl;
+		return -1;
+	}
 
-	Mat sobeledImg = imread("D:/example/dataset/전신 골격 원자선 스캔_소벨 필터.png");
-	cvtColor(sobeledImg, sobeledImg, COLOR_BGR2GRAY);
+	// BGR
+	cv::Mat frame;
+	cv::Mat originF;
 
-	Mat smothingImg;
-	medianBlur(sobeledImg, smothingImg, 5);
+	// HSV
+	cv::Mat hsvFrame;
+	cv::Mat hImg8U;
+	cv::Mat hImg32F;
+	vector<cv::Mat> planes;
 
-	Mat mulImg;
-	multiply(smothingImg, sharpedImg, mulImg);
-	mulImg = ~(mulImg - smothingImg);
+	// ROI
+	cv::Rect roi((camera.get(cv::CAP_PROP_FRAME_WIDTH) / 2) - (ROI_WIDTH / 2), (camera.get(cv::CAP_PROP_FRAME_HEIGHT) / 2) + ROI_HEIGHT, ROI_WIDTH, ROI_HEIGHT);
+	cv::Mat roiImg;
 
-	Mat sumImg;
-	add(img, mulImg, sumImg);
+	// Histogram
+	int histSize = 256;
+	float hValue[] = { 0, 256 };
+	const float* ranges[] = { hValue };
+	int channels = 0;
+	int dims = 1;
+	cv::Mat roiHist;
+	cv::Mat backProject;
 
-	imshow("Original", img);
-	imshow("Laplacian", laplacianImg);
-	imshow("Sharp", sharpedImg);
-	imshow("Sobel", sobeledImg);
-	imshow("Smothing", smothingImg);
-	imshow("Multipy", mulImg);
-	imshow("Result", sumImg);
-	waitKey(0);
+	// Extract result
+	cv::Mat rgbBp(cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH), camera.get(cv::CAP_PROP_FRAME_HEIGHT)), CV_32F, cv::Scalar(0));
+	cv::Mat chartBIN(cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH), camera.get(cv::CAP_PROP_FRAME_HEIGHT)), CV_8U, cv::Scalar(0));
+
+	// Start projection on window
+	while (true)
+	{
+		// Get frame per second
+		camera >> frame;
+		if (frame.empty()) break;
+		else frame.copyTo(originF);
+
+		// Convert BGR to HSV
+		cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
+
+		// ROI Backproject
+		cv::rectangle(frame, roi, cv::Scalar(0, 0, 255), 2);
+		if (!roiImg.empty()) // is Exist ROI image
+		{
+			// Extract H(Hue)
+			cv::split(hsvFrame, planes);
+			planes[0].copyTo(hImg8U);
+
+			// Make mask by backproject
+			hImg8U.convertTo(hImg32F, CV_32F);
+			cv::calcBackProject(&hImg32F, 1, &channels, roiHist, backProject, ranges);
+			cv::normalize(backProject, backProject, 0, 255, cv::NORM_MINMAX, CV_8U);
+
+			// Extract RGB image substacted mask(backproject)
+			rgbBp = cv::Scalar::all(0);
+			cv::bitwise_and(originF, originF, rgbBp, backProject);
+
+			// Calculate extracted region(Value == 1, white) on backproejct
+			chartBIN = cv::Scalar::all(0);
+			for (int y = 0; y < backProject.rows; y++)
+			{
+				int density = 0;
+				for (int x = 0; x < backProject.cols; x++)
+				{
+					if (backProject.at<uchar>(y, x) != 0) chartBIN.at<uchar>(y, density++) = 255;
+				}
+			}
+
+			// Show results
+			cv::imshow("Display <RESULT BACK_PROJECT>", backProject);
+			cv::imshow("Display <COLOR CHAR in BackProject>", chartBIN);
+			cv::imshow("Display <RESULT BACK_PROJECT(RGB)>", rgbBp);
+		}
+		cv::imshow("Display <ORIGIN>", frame);
+
+		// Function keys
+		char inputKey = cv::waitKey(1);
+		if (inputKey == 27) break;
+		else if (inputKey == 99 || inputKey == 67)
+		{
+			roiImg = hsvFrame(roi);
+			cv::calcHist(&roiImg, 1, &channels, cv::Mat(), roiHist, dims, &histSize, ranges);
+		}
+	}
 
 	return 0;
 }

@@ -1,8 +1,10 @@
-/*
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 using namespace std;
+
+#define ROI_WIDTH 100
+#define ROI_HEIGHT 100
 
 int main()
 {
@@ -46,6 +48,9 @@ int main()
 	cv::Mat rgbBp(cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH), camera.get(cv::CAP_PROP_FRAME_HEIGHT)), CV_32F, cv::Scalar(0));
 	cv::Mat chartBIN(cv::Size(camera.get(cv::CAP_PROP_FRAME_WIDTH), camera.get(cv::CAP_PROP_FRAME_HEIGHT)), CV_8U, cv::Scalar(0));
 
+	// Color compare
+	double skinRate = 0;
+
 	// Start projection on window
 	while (true)
 	{
@@ -81,15 +86,21 @@ int main()
 				int density = 0;
 				for (int x = 0; x < backProject.cols; x++)
 				{
-					if (backProject.at<uchar>(y, x) != 0) chartBIN.at<uchar>(y, density++) = 255;
+					if (backProject.at<uchar>(y, x) != 0)
+					{
+						chartBIN.at<uchar>(y, density++) = 255;
+						skinRate++;
+					}
 				}
 			}
+			skinRate = (skinRate / (backProject.rows * backProject.cols)) * 100;
 
 			// Show results
 			cv::imshow("Display <RESULT BACK_PROJECT>", backProject);
 			cv::imshow("Display <COLOR CHAR in BackProject>", chartBIN);
 			cv::imshow("Display <RESULT BACK_PROJECT(RGB)>", rgbBp);
 		}
+		cout << "영상 중 피부색 비율 = " << skinRate << "%" << endl;
 		cv::imshow("Display <ORIGIN>", frame);
 
 		// Function keys
@@ -104,4 +115,3 @@ int main()
 
 	return 0;
 }
-*/

@@ -34,9 +34,22 @@ int main() {
 	// BGR
 	Mat frame;
 
+	// HSV
+	vector<cv::Mat> planes;
+
 	// ROI
 	Rect roi((camera.get(cv::CAP_PROP_FRAME_WIDTH) / 2) - (ROI_WIDTH / 2), (camera.get(cv::CAP_PROP_FRAME_HEIGHT) / 2) - (ROI_HEIGHT / 2), ROI_WIDTH, ROI_HEIGHT);
 	Mat roiF;
+
+	// Histogram
+	int histSize = 256;
+	float hValue[] = { 0, 256 };
+	const float* ranges[] = { hValue };
+	int channels = 0;
+	int dims = 1;
+	Mat histAR;
+	Mat backProject;
+	calcHist(&arImg, 1, &channels, cv::Mat(), histAR, dims, &histSize, ranges);
 
 	// Descriptor
 	vector<KeyPoint> keypointsMtc, keypointsSrc;
@@ -144,29 +157,29 @@ int main() {
 			Mat translation_matrix = Mat(2, 3, CV_32F, warp_values);
 			warpAffine(persArImg, affinedArImg, translation_matrix, persArImg.size());
 
-			Mat grayArImg;
-			cvtColor(affinedArImg, grayArImg, COLOR_BGR2GRAY);
+			Mat binMaskImg;
+			Mat maskImg(affinedArImg.size(), affinedArImg.type(), Scalar(0, 255, 0));
+			multiply(Scalar::all(1) - affinedArImg, maskImg, maskImg);
+			add(affinedArImg, maskImg, maskImg);
 
-			Mat cannyArImg;
-			vector<Point> approxContour;
-			vector<vector<Point>> contours;
-			Mat ctrsImg = Mat::zeros(persArImg.size(), persArImg.type());
-			int npts;
-			const Point* pts;
-			Canny(grayArImg, cannyArImg, 50, 255);
-			findContours(cannyArImg, contours, noArray(), RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-			approxPolyDP(contours[0], approxContour, 50, false);
-			fillConvexPoly(ctrsImg, approxContour, Scalar::all(255));
-			
-			Mat mulArImg;
-			multiply(ctrsImg, affinedArImg, mulArImg);
-			multiply(Scalar::all(1.0) - ctrsImg, imgMatches, imgMatches);
+			Mat hsvMaskImg;
+			Mat hueMaskImg;
+			cvtColor(maskImg, hsvMaskImg, cv::COLOR_BGR2HSV);
+			split(hsvMaskImg, planes);
+			planes[0].copyTo(hueMaskImg);
+			calcBackProject(&hueMaskImg, 1, &channels, histAR, backProject, ranges);
+			normalize(backProject, backProject, 0, 255, cv::NORM_MINMAX, CV_8U);
+			bitwise_and(maskImg, maskImg, binMaskImg, backProject);
+			imshow("Display <binMaskImg>", binMaskImg);
+
+			multiply(maskImg, affinedArImg, affinedArImg);
+			multiply(Scalar::all(1) - imgMatches, maskImg, maskImg);
 
 			Mat resArImgMul = Mat::zeros(affinedArImg.size(), affinedArImg.type());
 			//Mat resArImgFunc = Mat::zeros(affinedArImg.size(), affinedArImg.type());
 			add(affinedArImg, imgMatches, resArImgMul);
 			//alphaBlend(affinedArImg, imgMatches, binArImg, resArImgFunc);
-			
+
 			imshow("Display <RESULT>", resArImgMul);
 			//imshow("Display <RESULT_FUNC>", resArImgFunc);
 		}

@@ -23,3 +23,31 @@
 5. Label VS Contour
 - (KR) label 함수를 이용하여 윤곽선을 잡는 걸로 정확도가 만족이 안되면 contour 함수로 직접 윤곽선을 잡아 정확도를 향상시킬 수도 있다.
 - (EN) If the accuracy is not satisfied by using the label function, the accuracy can be improved by directly capturing the contour with the contour function.
+
+6. Keypoints Match
+- (KR) .match로 매칭이 안되는 건 .knnMatch로 매칭이 될 수도 있다.
+- (EN) The one that doesn't match, It can also be matched by knnmatch.
+
+7. OpenCV 4.5.0 CMake x64/x84 Build Debug/Release respectively
+- (KR)
+	1) NONFREE 체크 및 EIGEN, EXTRA(contrib/modules) 경로 지정
+	2) BUILD_JASPER, PAKAGE, JAVA 체크 해제
+	3) WITH_1394, JASPER, LAPACK, VTK 체크 해제
+	4) INSTALL경로 지정 (프로젝트 빌드시 파일 생성 경로)
+- (EN)
+	1) NONFREE check and path EIGEN, EXTRA (contrib/modules)
+	2) Uncheck BUILD_JASPER, PAKAGE, JAVA
+	3) WITH_1394, JASPER, LAPACK, VTK unchecked
+	4) INSTALL path designation (file creation path when building a project)
+
+8. ZXing CMake x64/x84 Build Debug/Release respectively
+- (KR)
+	1) CONTIGURATION_TYPE 에서 Debug;Release; 지정
+		1-1) Debug 빼고 Release만 지정 가능
+	2) INSTALL_PREFIX 경로 지정 (프로젝트 빌드시 파일 생성 경로)
+	3) OpenCV_DIR 경로 지정 (CMake 프로젝트 빌드로 생긴 OpenCV 디렉토리 경로)
+- (EN)
+	1) Specify Debug;Release; in CONTIGURATION_TYPE
+		1-1) Only releases can be specified without debugs
+	2) INSTALL_PREFIX Path Specification (File Creation Path on Project Build)
+	3) Path OpenCV_DIR (OpenCV directory path created by CMake project build)

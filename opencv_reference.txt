@@ -51,3 +51,11 @@
 		1-1) Only releases can be specified without debugs
 	2) INSTALL_PREFIX Path Specification (File Creation Path on Project Build)
 	3) Path OpenCV_DIR (OpenCV directory path created by CMake project build)
+
+9. Removing characters in document
+- (KR)
+	1) 컨투어를 추출해서 컨투어의 바운딩박스가 일정 크기 이하면 제거
+	2) 컨투어를 추출해서 컨투어의 바운딩박스 내 해당 컨투어의 영역이 일정 범위 이하면 제거
+- (EN)
+	1) Extract the contour and remove it if the bounding box of the contour is smaller than a certain size
+	2) Extract the contour and remove it if the area of the contour in the bounding box is less than a certain range

@@ -59,3 +59,19 @@
 - (EN)
 	1) Extract the contour and remove it if the bounding box of the contour is smaller than a certain size
 	2) Extract the contour and remove it if the area of the contour in the bounding box is less than a certain range
+
+10. Add or substract border
+- (KR) 배경 이미지를 따로 생성하여 관심 영역으로 이미지를 넣음으로써, white 또는 black의 border를 추가 또는 제거한 영상을 얻을 수 있다.
+- (EN) By separately generating a background image and inserting the image into an area of interest, an image in which a white or black border is added or removed can be obtained.
+
+11. Rotate image
+- (KR) Affine transform을 통해 이미지를 회전시킬 수도 있지만, 90도씩 회전시키는 것이 목적이라면 OpenCV 내부의 rotate 함수를 이용하면 더 쉽게 회전시킬 수 있다.
+- (EN) The image can be rotated through Affine transform, but if the purpose is to rotate by 90 degrees, it can be rotated more easily using the rotate function inside OpenCV.
+
+12. Marshal C# to C++
+- (KR)
+	C#에서 넘긴 매개변수를 C++에서 수정하고 싶은데 반영이 안되는 경우가 있다.(Ex. 배열)
+	C++ 코드(DLL)에서 반영하고자 하는 것을 C#에서 넘긴 매개변수의 메모리에 직접 복사(memcpy, strcpy)하여 C#에선 문자열은 byte로, 그 외 자료형은 해당 자료형의 배열로 받는다.
+- (EN)
+	If want to modify the parameters passed from C# in C++ (Marshaling), but sometimes it is not reflected. (Ex. Array)
+	In the C++ code (DLL), what is intended to be reflected is copied directly into the memory of the parameter passed from C# (memcpy, strcpy), and in C#, the string is byte and the other data types are received as an array of corresponding data types.

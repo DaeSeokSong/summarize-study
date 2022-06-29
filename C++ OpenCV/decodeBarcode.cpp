@@ -69,3 +69,88 @@ if (!is2D && isRightRange)
 		&& !(detectDegree >= 180 - rotateDegree - ROTATE_ERROR && detectDegree <= 180 - rotateDegree + ROTATE_ERROR))
 		isRightDegree = false;
 }
+
+// Extract line
+Mat thsRotImg;
+threshold(rotateImg, thsRotImg, 5, 255, THRESH_OTSU);
+
+vector<int> restorePtX;
+vector<int> startPtX;
+vector<int> endPtX;
+int blackX = 0;
+for (int x = 0; x < thsRotImg.cols; x++)
+{
+	int beforeBlackX = blackX;
+	int objHeight = 0;
+	for (int y = 0; y < thsRotImg.rows; y++)
+	{
+		if (thsRotImg.at<uchar>(y, x) == 0)
+		{
+			objHeight++;
+			if (objHeight > 20)
+			{
+				restorePtX.push_back(x);
+				if (blackX == 0)startPtX.push_back(x);
+
+				blackX++;
+				break;
+			}
+		}
+	}
+
+	if (blackX != 0 && beforeBlackX == blackX)
+	{
+		endPtX.push_back(x - 1);
+		blackX = 0;
+	}
+}
+
+// Decrease too big black pixel group
+int groupNum = startPtX.size();
+for (int grpIdx = 0; grpIdx < groupNum; grpIdx++)
+{
+	int startPt = startPtX[grpIdx];
+	int endPt = endPtX[grpIdx];
+	int count = endPt - startPt + 1;
+	int scaled = int(count * 9.0f / groupNum);
+
+	if (scaled > 4)
+	{
+		//int startIdx = find(restorePtX.begin(), restorePtX.end(), startPt) - restorePtX.begin();
+		int endIdx = find(restorePtX.begin(), restorePtX.end(), endPt) - restorePtX.begin();
+
+		//restorePtX.erase(restorePtX.begin() + startIdx);
+		restorePtX.erase(restorePtX.begin() + endIdx);
+
+		//int dist1 = restorePtX[startIdx] - restorePtX[startIdx - 1];
+		//int dist2 = restorePtX[endPt + 1] - restorePtX[endPt];
+
+		//if (dist1 < dist2) restorePtX.erase(restorePtX.begin() + startIdx);
+		//else restorePtX.erase(restorePtX.begin() + endIdx);
+	}
+}
+
+// Create line
+vector<vector<Point>> cons;
+findContours(~thsRotImg, cons, RETR_LIST, CHAIN_APPROX_SIMPLE);
+
+vector<Point> pts;
+for (vector<Point> con : cons)
+{
+	for (Point pt : con) pts.push_back(pt);
+}
+
+Rect tmp = boundingRect(pts);
+rectangle(thsRotImg, tmp, Scalar::all(255), -1);
+
+for (int x = tmp.x; x < tmp.x + tmp.width; x++)
+{
+	if (find(restorePtX.begin(), restorePtX.end(), x) != restorePtX.end())
+	{
+		Point top(x, tmp.y);
+		Point bot(x, tmp.y + tmp.height);
+		line(thsRotImg, top, bot, Scalar::all(0), 1);
+	}
+}
+rotateImg = thsRotImg;
+decodeBarcode(rotateImg, decodedTexts, degree, is2D);

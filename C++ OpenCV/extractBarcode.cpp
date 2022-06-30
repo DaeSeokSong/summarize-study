@@ -133,3 +133,69 @@ resize(densityRegion, densityRegion, Size(densityRegion.cols * 2, densityRegion.
 // Thresh density
 double dRatio = countNonZero(densityRegion) / (double)(densityRegion.cols * densityRegion.rows);
 if (dRatio > minRectDensity)
+
+
+
+
+
+// Remove filled box about black color
+Mat distribution(densityRegion.size(), densityRegion.type(), Scalar::all(255));
+vector<int> blackPixels;
+bool isBarcode = true;
+
+int spaceCnt = 0;
+if (!is2D) densityRegion = ~densityRegion;
+for (int x = 1; x < densityRegion.cols - 1; x++)
+{
+	int blackNum = 0;
+	for (int y = 0; y < densityRegion.rows; y++)
+	{
+		if (densityRegion.at<uchar>(y, x) == 0) distribution.at<uchar>(blackNum++, x) = 0;
+	}
+
+	if (blackNum > (densityRegion.rows / 20))
+	{
+		if (is2D) blackPixels.push_back(blackNum);
+		else
+		{
+			if (blackNum >= densityRegion.rows - 30)
+			{
+				isBarcode = false;
+				break;
+			}
+		}
+	}
+	else
+	{
+		if (is2D)
+		{
+			if (blackNum == 0) spaceCnt++;
+			if (spaceCnt > 3)
+			{
+				spaceCnt = 0;
+				isBarcode = false;
+				break;
+			}
+		}
+	}
+}
+
+if (is2D && isBarcode)
+{
+	// Calculate sum, mean, vrnc(분산), stdev(표준편차)
+	double sum = std::accumulate(blackPixels.begin(), blackPixels.end(), 0.0);
+	double mean = sum / blackPixels.size();
+
+	// Prevent underflow or overflow
+	vector<double> diff(blackPixels.size());
+	std::transform(blackPixels.begin(), blackPixels.end(), diff.begin(), [mean](double x) { return x - mean; });
+
+	double sq_sum = inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+	double vrnc = sq_sum / blackPixels.size();
+	double stdev = sqrt(vrnc);
+
+	if (mean < MIN_BLACK_PIXEL_MEAN_2D && stdev < MIN_BLACK_PIXEL_STDEV_2D)
+		isBarcode = false;
+}
+
+if (!isBarcode) continue;

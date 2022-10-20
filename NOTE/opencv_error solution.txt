@@ -1,0 +1,7 @@
+1. cv::VideoCapture::open VIDEOIO(CV_IMAGES): raised OpenCV exception
+→ (kr) 다운 받은 opencv 폴더 내의 opencv\build\bin 안의 opencv_videoio_ffmpeg455_64.dll 파일은 프로젝트 폴더에 복사해서 넣는다.
+→ (en) The file openv_video_ffmpeg455_64.dll in the openv\build\bin downloaded is copied and placed in the project folder.
+
+2. Cv plugin impl::DynamicLib::libraryLoad load opencv_core_parallel_openmp452_64d dll FAILED
+→ (kr) cv::imshow() 뒤에 cv::waitKey() 함수를 호출하지 않았으면 추가한다.
+→ (en) If the cv::weightkey() function is not called after cv::imshow(), add it.
